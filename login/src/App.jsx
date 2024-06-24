@@ -1,35 +1,82 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState, useEffect } from 'react'
 import './App.css'
+import clsx from 'clsx'
+import { useForm } from 'react-hook-form'
+import { dataValidation } from './api'
+import { Toaster, toast } from 'sonner'
 
 function App() {
-  const [count, setCount] = useState(0)
+ 
+  const { register, handleSubmit, formState: { erros, isValid, isSubmitted}, reset, setFocus } = useForm();
 
+  function onSumbit(data) {
+    
+      dataValidation(data)
+        .then((response) => {
+          return response.json()
+        })
+        .then((json) => {
+          if(json?.data?.token){
+            localStorage.setItem('token', json.data.token)
+            setFocus('email');
+            toast.success('Logged')
+            reset();
+          }else{
+            toast.warning('Log Failed')
+          }
+            
+        })
+        .catch((error) =>{
+          console.error('Error', error);
+          toast.error('Error ' + error.message)
+          
+        })
+    } 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <main className='w-full min-h-screen flex flex-col gap-4'>
+        <Toaster position='top-right' richColors />
+        <p className='w-full bg-slate-600 text-white font-bold text-center p-2'> Login Form </p>
+
+        <form 
+          className='flex flex-col gap-4 items-center'
+          onSubmit={handleSubmit(onSumbit)}
+        >
+          <p className=''> Email </p>
+          <input 
+            className='bg-white  text-black w-full max-w-screen-sm p-2'
+            type='text'
+            placeholder='Ingresa tu correo electronico'
+            required
+            {...register('email', {
+              required: { value: true, message: "Campo requerido" },
+              minLength: { value: 3, message: "Minimo 3 caracteres" },
+              maxLength: { value: 50, message: "Máximo  caracteres" },
+              pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i,message: "Correo Invalido"}
+            })}
+          > </input>
+          <p> Password </p>
+          <input 
+            className='bg-white text-black w-full max-w-screen-sm p-2'
+            type='text'
+            placeholder='Ingres password'
+            required
+            {...register('password', {
+              required: { value: true, message: "Campo requerido" },
+              minLength: { value: 3, message: "Minimo 3 caracteres" },
+              maxLength: { value: 50, message: "Máximo  caracteres" },
+            })}
+          >
+          </input>
+          <button
+            className="text-black px-3 rounded bg-white disabled:bg-stone-400" 
+          >
+            + Agregar
+          </button> 
+        </form>
+        
+      </main>
     </>
   )
 }
-
 export default App
